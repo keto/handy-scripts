@@ -1,0 +1,19 @@
+#!/bin/sh
+if [ -z $2 ]; then
+  echo "Search And Replace String"
+  echo "Usage: $0 <old> <new>"
+  exit
+fi
+FILES=`grep -rl "$1" .`
+
+echo "Replacing '$1' with '$2' in"
+echo $FILES
+
+count=5
+for c in {5,4,3,2,1}; do
+  echo -ne "In $c seconds... (CTRL-C to abort, return to proceed)\r"
+  read -t 1 && break
+done
+
+sed --in-place=.sars "s/$1/$2/g" $FILES
+

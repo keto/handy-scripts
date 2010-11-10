@@ -1,0 +1,96 @@
+#!/usr/bin/python -tt
+
+# Ugly script to list info about bunch of git repos
+# When you have set of git directories, this script can be used to check the
+# branches in wich the working copies are in or list working copies currently
+# in specific branch, etc... Useful when working on tasks that involve changes
+# in several repositories
+
+import os, sys
+from commands import getoutput
+from optparse import OptionParser
+import glob
+
+matcher = glob.fnmatch.fnmatch
+
+usage = """
+Tool to list branch information of git repositories under current directory
+
+uage: %prog [options]"""
+
+parser = OptionParser(usage=usage)
+
+parser.add_option("--has", action="append", dest="has",
+        help="List repos having given branch")
+parser.add_option("--remotes", "-r", action="store_true")
+parser.add_option("--locals", "-l", action="store_true")
+parser.add_option("--in", action="append", dest="include",
+        help="List repos currently in given branch")
+parser.add_option("--ex", action="append", dest="exclude",
+        help="List repos currently not in given branch")
+parser.add_option("--nb", action="store_true", dest="nobranch",
+        help="Do not show branch names in output, only list directories")
+opts, _ = parser.parse_args()
+
+if opts.include and opts.exclude:
+    parser.print_help()
+    print "--in and --ex are exclusive"
+    sys.exit(1)
+
+# TODO: currently checks only directories under current dir
+# maybe add possibility to specify targets on commandline
+dirs = [d for d in os.listdir('.') if os.path.isdir(d)]
+dirs.sort()
+olddir = os.path.realpath('.')
+result = []
+
+# check dirs and inspect the git data based on given arguments
+for d in dirs:
+    os.chdir(d)
+    if not os.path.exists('.git'):
+        result.append(("*NOT GIT*",d))
+        os.chdir(olddir)
+        continue
+    r = {}
+    if opts.has:
+        refs = []
+        both = (not opts.remotes and not opts.locals)
+        if opts.locals or both:
+            for ref in os.listdir('.git/refs/heads'):
+                refs.append((ref, 'HEAD'))
+        if opts.remotes or both:
+            for remote in os.listdir('.git/refs/remotes'):
+                for ref in os.listdir('.git/refs/remotes/%s' % remote):
+                    refs.append((ref, remote))
+
+        for ref, head in refs:
+            for haspat in opts.has:
+                if matcher(ref, haspat):
+                    r["branch"] = "%s[%s]" % (ref,head)
+                    r["dir"] = d
+    else:
+        b = ''
+        if os.path.exists('.git/HEAD'):
+            b = open('.git/HEAD').read().split('/')[-1].strip()
+
+        if b:
+            if (opts.include and b in opts.include) or \
+                    (opts.exclude and b not in opts.exclude) or \
+                    (not opts.include and not opts.exclude):
+                r["branch"] = b
+                r["dir"] = d
+    if r:
+        result.append(r)
+    os.chdir(olddir)
+
+templ = ""
+if not opts.nobranch:
+    # we want the branch name in output
+    length = 0
+    # make output somewhat nicely aligned
+    for r in result:
+        length = max(len(r["branch"]), length)
+    templ += "%(branch)" + str(length) + "s "
+templ += "%(dir)s"
+for r in result:
+    print templ % r
