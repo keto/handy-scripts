@@ -1,0 +1,25 @@
+#!/bin/sh
+# Avahi ssh client script
+# (C) Keto, 2010
+echo -n "\033]2;ASSh\007"
+
+makelist ()
+{
+while read line
+do
+    HOSTNAME=`echo $line|cut -d ';' -f4`
+    IP_PORT=`echo $line|cut -d ';' -f 8,9|sed "s/;/:/"`
+    echo -n "$HOSTNAME $IP_PORT "
+done
+}
+
+LIST=`avahi-browse -tpr _ssh._tcp|grep -e "^="|makelist`
+
+HOST=`zenity --list --title "ASSh" --text "Select host" \
+ --column "host" --column "address:port" --print-column=2 $LIST`
+
+if [ ! -z "$HOST" ]; then
+    PORT=${HOST##*:}
+    HOST=${HOST%%:*}
+    ssh -p $PORT $HOST $@
+fi

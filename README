@@ -1,8 +1,10 @@
-Some random script I use regulary
+Some random scripts I have created to help my daily work
 
  * do_chroot - dchroot wrapper which can be used by symlinkin
    [chroot name]_[command] -> do_chroot
  * git_list_branch - check several git repo branch status at once
+ * sars - recursively search and replace string in files under current directory
+ * assh - Avahi ssh client helper
 
 All code is free in every way, provided as is, and I don't take any
 responsibility if it kills your cat, burns your house or does anything else
