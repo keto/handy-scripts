@@ -1,10 +1,21 @@
 #!/bin/bash
 # Avahi ssh client script
-# (C) Keto, 2010
+#
+# Replacement for bssh from avahi-utils
+#
+# Searches for available ssh services using avahi-browse and dispalys
+# selection dialog using zenity. All arguments are passed to ssh command.
+#
+# Environment variables:
+#   ASSH_IPV - Define IP version to display
+#     Default is "4", use "6" for only IPv6 and "46" for both
+#
+# (C) Keto, 2010-2011
 echo -ne "\033]2;ASSh\007"
-
-LIST=`avahi-browse -tpr _ssh._tcp|grep -e "^="|\
- cut -d ';' -f 2,3,4,8,9 --output-delimiter ' '`
+    
+LIST=$(avahi-browse -tpr _ssh._tcp|
+    grep -e "^=;.*;IPv[${ASSH_IPV:-4}]"|
+    cut -d ';' -f 2,3,4,8,9 --output-delimiter ' ')
 SELECTION=`zenity --list --title "ASSh" --text "Select host" \
  --column "if" --column "ipv" --column "host" --column "address" \
  --column "port" --print-column ALL --separator ' ' $LIST`
