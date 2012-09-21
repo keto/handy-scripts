@@ -48,7 +48,7 @@ result = []
 for d in dirs:
     os.chdir(d)
     if not os.path.exists('.git'):
-        result.append(("*NOT GIT*",d))
+        result.append({'dir': d, 'branch': "*NOT GIT*"})
         os.chdir(olddir)
         continue
     r = {}
